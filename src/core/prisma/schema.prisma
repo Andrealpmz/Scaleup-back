@@ -1,0 +1,282 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model project {
+    id                 Int            @id @unique @default(autoincrement())
+    name               String         @unique
+    type               String
+    celebration_day    DateTime?
+    deadline           DateTime?
+    description        String
+    obj_general        String?
+    obj_specifics      String[]
+    budget             Int?
+    software           String?
+    state              String?        @default("borrador")
+    leader_id          Int
+    leader_id_relation user           @relation(fields: [leader_id], references: [id], onDelete: NoAction, map: "user")
+    image              String?
+    org_id             Int
+    org_id_relation    organization   @relation(fields: [org_id], references: [id], onDelete: NoAction, map: "organization")
+    created_at         DateTime       @default(now())
+    updated_at         DateTime?      @updatedAt
+    modules            modules[]
+    resources          resources[]
+    team               team[]
+    project_area       project_area[]
+}
+
+model modules {
+    id                  Int        @id @unique @default(autoincrement())
+    project_id          Int
+    project_id_relation project    @relation(fields: [project_id], references: [id], onDelete: NoAction, map: "project")
+    name                String
+    color               String?
+    created_at          DateTime   @default(now())
+    updated_at          DateTime?  @updatedAt
+    activity            activity[]
+}
+
+model activity {
+    id                 Int         @id @unique @default(autoincrement())
+    type               String
+    key                String      @unique
+    name               String
+    description        String
+    status             String
+    assignee           String?
+    reporter           String?
+    due_date           DateTime
+    creator            String
+    module_id          Int
+    module_id_relation modules     @relation(fields: [module_id], references: [id], onDelete: NoAction, map: "modules")
+    created_at         DateTime    @default(now())
+    updated_at         DateTime?   @updatedAt
+    comments           comments[]
+    resources          resources[]
+}
+
+model comments {
+    id                   Int       @id @unique @default(autoincrement())
+    activity_id          Int
+    activity_id_relation activity  @relation(fields: [activity_id], references: [id], onDelete: NoAction, map: "activity")
+    content              String?
+    created_at           DateTime  @default(now())
+    updated_at           DateTime? @updatedAt
+}
+
+model resources {
+    id                   Int       @id @unique @default(autoincrement())
+    file                 String
+    name                 String
+    project_id           Int
+    project_id_relation  project   @relation(fields: [project_id], references: [id], onDelete: NoAction, map: "project")
+    activity_id          Int
+    activity_id_relation activity  @relation(fields: [activity_id], references: [id], onDelete: NoAction, map: "activity")
+    created_at           DateTime  @default(now())
+    updated_at           DateTime? @updatedAt
+}
+
+model user {
+    id               Int             @id @unique @default(autoincrement())
+    email            String          @unique
+    name             String
+    last_name        String
+    phone            String?
+    country          String?
+    city             String?
+    image            String?
+    status           Boolean?        @default(true)
+    verfication_code String?
+    verified         Boolean?        @default(false)
+    password         String?
+    created_at       DateTime        @default(now())
+    updated_at       DateTime?       @updatedAt
+    members          members[]
+    project          project[]
+    user_team        user_team[]
+    user_position    user_position[]
+}
+
+model user_position {
+    id                   Int       @id @unique @default(autoincrement())
+    position_id          Int
+    position_id_relation position  @relation(fields: [position_id], references: [id], onDelete: NoAction, map: "position")
+    user_id              Int
+    user_id_relation     user      @relation(fields: [user_id], references: [id], onDelete: NoAction, map: "user")
+    level                String
+    created_at           DateTime  @default(now())
+    updated_at           DateTime? @updatedAt
+}
+
+model position {
+    id            Int             @id @unique @default(autoincrement())
+    name          String
+    status        Boolean         @default(true)
+    category      String
+    created_at    DateTime        @default(now())
+    updated_at    DateTime?       @updatedAt
+    user_position user_position[]
+}
+
+model user_team {
+    id               Int       @id @unique @default(autoincrement())
+    user_id          Int
+    user_id_relation user      @relation(fields: [user_id], references: [id], onDelete: NoAction, map: "user")
+    team_id          Int
+    team_id_relation team      @relation(fields: [team_id], references: [id], onDelete: NoAction, map: "team")
+    created_at       DateTime  @default(now())
+    updated_at       DateTime? @updatedAt
+}
+
+model members {
+    id               Int          @id @unique @default(autoincrement())
+    user_id          Int
+    user_id_relation user         @relation(fields: [user_id], references: [id], onDelete: NoAction, map: "user")
+    role_id          Int
+    role_id_relation role         @relation(fields: [role_id], references: [id], onDelete: NoAction, map: "role")
+    org_id           Int
+    org_id_relation  organization @relation(fields: [org_id], references: [id], onDelete: NoAction, map: "organization")
+    created_at       DateTime     @default(now())
+    updated_at       DateTime     @updatedAt
+}
+
+model organization {
+    id         Int         @id @unique @default(autoincrement())
+    nit        String      @unique
+    logo       String?
+    type       String
+    name       String
+    country    String
+    city       String
+    website    String?
+    areas      Int[]
+    created_at DateTime    @default(now())
+    updated_at DateTime    @updatedAt
+    team       team[]
+    members    members[]
+    diagnosis  diagnosis[]
+    project    project[]
+}
+
+model team {
+    id                  Int          @id @default(autoincrement())
+    project_id          Int
+    project_id_relation project      @relation(fields: [project_id], references: [id], onDelete: NoAction, map: "project")
+    org_id              Int
+    org_id_relation     organization @relation(fields: [org_id], references: [id], onDelete: NoAction, map: "organization")
+    name                String
+    areas               Int[]
+    status              Boolean?     @default(true)
+    created_at          DateTime     @default(now())
+    updated_at          DateTime?    @updatedAt
+    closed_at           DateTime?
+    user_team           user_team[]
+}
+
+model area {
+    id           Int            @id @unique @default(autoincrement())
+    name         String
+    image        String?
+    color        String?
+    description  String?
+    created_at   DateTime       @default(now())
+    updated_at   DateTime?      @updatedAt
+    question     questions[]
+    project_area project_area[]
+}
+
+model project_area {
+    id                  Int       @id @unique @default(autoincrement())
+    project_id          Int
+    project_id_relation project   @relation(fields: [project_id], references: [id], onDelete: NoAction, map: "project")
+    area_id             Int
+    area_id_relation    area      @relation(fields: [area_id], references: [id], onDelete: NoAction, map: "area")
+    created_at          DateTime  @default(now())
+    updated_at          DateTime? @updatedAt
+}
+
+model question_answers {
+    id                Int       @id @unique @default(autoincrement())
+    question          Int
+    question_relation questions @relation(fields: [question], references: [id], onDelete: NoAction, map: "questions")
+    answer            Int
+    answer_relation   answers   @relation(fields: [answer], references: [id], onDelete: NoAction, map: "answers")
+    created_at        DateTime  @default(now())
+    updated_at        DateTime? @updatedAt
+}
+
+model questions {
+    id               Int                @id @unique @default(autoincrement())
+    content          String
+    description      String?
+    area_id          Int
+    area_id_relation area               @relation(fields: [area_id], references: [id], onDelete: NoAction, map: "area")
+    type             String?
+    is_main          Boolean?
+    image            String?
+    created_at       DateTime           @default(now())
+    updated_at       DateTime?          @updatedAt
+    diagnosis        diagnosis[]
+    question_answers question_answers[]
+}
+
+model answers {
+    id               Int                @id @unique @default(autoincrement())
+    value            Int
+    content          String
+    type             String
+    created_at       DateTime           @default(now())
+    updated_at       DateTime?          @updatedAt
+    diagnosis        diagnosis[]
+    question_answers question_answers[]
+}
+
+model diagnosis {
+    id                   Int          @id @unique @default(autoincrement())
+    org_id               Int
+    org_id_relation      organization @relation(fields: [org_id], references: [id], onDelete: NoAction, map: "organization")
+    question_id          Int
+    question_id_relation questions    @relation(fields: [question_id], references: [id], onDelete: NoAction, map: "questions")
+    answer_id            Int
+    answer_id_relation   answers      @relation(fields: [answer_id], references: [id], onDelete: NoAction, map: "answers")
+    created_at           DateTime     @default(now())
+    updated_at           DateTime?    @updatedAt
+}
+
+model permissions {
+    id              Int                @id @unique @default(autoincrement())
+    name            String
+    status          Boolean            @default(true)
+    module          String
+    platform        String
+    created_at      DateTime           @default(now())
+    updated_at      DateTime?          @updatedAt
+    role_permission role_permissions[]
+}
+
+model role {
+    id              Int                @id @unique @default(autoincrement())
+    name            String             @unique
+    status          Boolean            @default(true)
+    created_at      DateTime           @default(now())
+    updated_at      DateTime?          @updatedAt
+    role_permission role_permissions[]
+    members         members[]
+}
+
+model role_permissions {
+    id                     Int         @id @unique @default(autoincrement())
+    role_id                Int
+    role_id_relation       role        @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "role")
+    permission_id          Int
+    permission_id_relation permissions @relation(fields: [permission_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "permissions")
+    created_at             DateTime    @default(now())
+    updated_at             DateTime?   @updatedAt
+}
